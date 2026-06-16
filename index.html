@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>末日准备者 - 综合生存知识库</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="top-bar">
+        <button class="menu-toggle" id="menuToggle" title="菜单">☰</button>
+        <div class="logo">
+            <span class="logo-icon">☢️</span>
+            <span class="logo-text">末日准备者</span>
+            <span class="logo-sub">SURVIVAL KNOWLEDGE BASE</span>
+        </div>
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="搜索生存知识... (按 / 快速聚焦)" autocomplete="off">
+            <button class="search-btn" id="searchBtn">🔍</button>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" id="advisorBtn" title="智能推荐">🧠 智能推荐</button>
+            <button class="icon-btn" id="resourcesBtn" title="物资资料库">📦 物资库</button>
+            <button class="icon-btn" id="plannerBtn" title="避难所规划器">🏗️ 规划器</button>
+            <button class="icon-btn" id="favBtn" title="收藏夹">⭐ <span class="badge" id="favCount">0</span></button>
+            <button class="icon-btn" id="calcBtn" title="生存计算器">🧮</button>
+            <button class="icon-btn" id="printBtn" title="打印当前内容">🖨️</button>
+        </div>
+    </header>
+
+    <!-- 主体布局 -->
+    <div class="main-container">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>📋 知识分类</h2>
+                <button class="collapse-all" id="collapseAll">全部折叠</button>
+            </div>
+            <nav class="nav-tree" id="navTree">
+                <!-- 由JS动态生成 -->
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-secondary" id="showFavorites">⭐ 查看收藏夹</button>
+                <button class="btn-secondary" id="showChecklist">📝 生存清单</button>
+            </div>
+        </aside>
+
+        <!-- 遮罩层 (移动端) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- 主内容区 -->
+        <main class="content" id="mainContent">
+            <!-- 欢迎页面 -->
+            <div class="welcome" id="welcomePage">
+                <div class="welcome-hero">
+                    <h1>☢️ 末日准备者综合生存知识库</h1>
+                    <p class="welcome-subtitle">BE PREPARED. STAY ALIVE.</p>
+                    <div class="welcome-stats">
+                        <div class="stat-item">
+                            <span class="stat-num" id="statCategories">17</span>
+                            <span class="stat-label">知识分类</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-num" id="statArticles">200+</span>
+                            <span class="stat-label">生存指南</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-num" id="statTools">4</span>
+                            <span class="stat-label">计算工具</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="welcome-grid" id="welcomeGrid">
+                    <!-- 由JS动态生成分类卡片 -->
+                </div>
+                <div class="welcome-quote">
+                    <blockquote>"准备不是恐惧，而是对生命的尊重。当灾难来临时，准备者不是惊慌失措的受害者，而是能够保护自己和家人的守护者。"</blockquote>
+                </div>
+            </div>
+
+            <!-- 内容详情页 -->
+            <div class="article-page" id="articlePage" style="display:none;">
+                <div class="breadcrumb" id="breadcrumb"></div>
+                <article class="article-content" id="articleContent"></article>
+                <div class="article-meta" id="articleMeta"></div>
+                <div class="article-related" id="articleRelated"></div>
+            </div>
+
+            <!-- 收藏夹页面 -->
+            <div class="favorites-page" id="favoritesPage" style="display:none;">
+                <h2>⭐ 我的收藏夹</h2>
+                <div id="favoritesList"></div>
+            </div>
+
+            <!-- 生存清单页面 -->
+            <div class="checklist-page" id="checklistPage" style="display:none;">
+                <h2>📝 生存物资清单</h2>
+                <div id="checklistContent"></div>
+            </div>
+
+            <!-- 物资资料库 -->
+            <div class="resources-page" id="resourcesPage" style="display:none;">
+                <div id="resourcesContent"></div>
+            </div>
+
+            <!-- 避难所规划器 -->
+            <div class="planner-page" id="plannerPage" style="display:none;">
+                <div id="plannerContent"></div>
+            </div>
+
+            <!-- 智能推荐 -->
+            <div class="advisor-page" id="advisorPage" style="display:none;">
+                <div id="advisorContent"></div>
+            </div>
+
+            <!-- 物资详情模态 -->
+            <div class="modal-overlay" id="resourceModal">
+                <div class="modal modal-wide">
+                    <div class="modal-header">
+                        <h2 id="resourceModalTitle">物资详情</h2>
+                        <button class="modal-close" id="resourceModalClose">✕</button>
+                    </div>
+                    <div class="modal-body" id="resourceModalBody"></div>
+                </div>
+            </div>
+
+            <!-- 物资对比面板 -->
+            <div class="compare-panel" id="comparePanel" style="display:none;">
+                <div class="compare-header">
+                    <span>🔄 对比模式 (<span id="compareCount">0</span>/4)</span>
+                    <button class="btn-action" id="compareClear">清空</button>
+                    <button class="btn-action" id="compareToggle">收起</button>
+                </div>
+                <div class="compare-items" id="compareItems"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 计算器模态框 -->
+    <div class="modal-overlay" id="calcModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>🧮 生存计算器</h2>
+                <button class="modal-close" id="calcClose">✕</button>
+            </div>
+            <div class="modal-body" id="calcBody">
+                <!-- 由JS动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 回到顶部 -->
+    <button class="back-to-top" id="backToTop" title="回到顶部">⬆</button>
+
+    <script src="js/data.js"></script>
+    <script src="js/resources.js"></script>
+    <script src="js/advisor.js"></script>
+    <script src="js/calc.js"></script>
+    <script src="js/shelter-planner.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

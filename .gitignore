@@ -1,0 +1,27 @@
+# 非网站文件 - 不提交
+WeChatMsg-Setup.exe
+WeChatMsg.zip
+wechatmsg_full.zip
+wechat_msg/
+wechat_msg_full/
+wechat_counter.py
+wechat_exporter.py
+run_wechat_counter.bat
+run_wechat_exporter.bat
+requirements_wechat.txt
+weixin-bot/
+encrypted_messenger/
+steam_deals/
+anime_search/
+paper-sorter/
+menu_*.png
+__pycache__/
+*.pyc
+*.py
+!requirements_wechat.txt
+.claude/
+实验完成指南.md
+verify_env.py
+experiment*.py
+wechatmsg_full.zip
+*.db
