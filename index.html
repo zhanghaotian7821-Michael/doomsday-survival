@@ -1,10 +1,12 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-theme="wasteland">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>末日准备者 - 综合生存知识库</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/wasteland.css">
 </head>
 <body>
     <!-- 顶部导航栏 -->
@@ -26,6 +28,7 @@
             <button class="icon-btn" id="plannerBtn" title="避难所规划器">🏗️ 规划器</button>
             <button class="icon-btn" id="favBtn" title="收藏夹">⭐ <span class="badge" id="favCount">0</span></button>
             <button class="icon-btn" id="calcBtn" title="生存计算器">🧮</button>
+            <button class="icon-btn" id="themeBtn" title="切换配色">⬤</button>
             <button class="icon-btn" id="printBtn" title="打印当前内容">🖨️</button>
         </div>
     </header>
@@ -55,6 +58,56 @@
             <!-- 欢迎页面 -->
             <div class="welcome" id="welcomePage">
                 <div class="welcome-hero">
+                    <!-- 废墟天际线主视觉（纯 SVG，无图片资源） -->
+                    <div class="hero-scene" aria-hidden="true">
+                        <svg viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <radialGradient id="hsSun" cx="0.5" cy="0.5" r="0.5">
+                                    <stop offset="0" stop-color="#ffd27a" stop-opacity="0.5"/>
+                                    <stop offset="0.45" stop-color="#ffb02e" stop-opacity="0.16"/>
+                                    <stop offset="1" stop-color="#ffb02e" stop-opacity="0"/>
+                                </radialGradient>
+                                <linearGradient id="hsHaze" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#0e0a07" stop-opacity="0"/>
+                                    <stop offset="0.62" stop-color="#0e0a07" stop-opacity="0.55"/>
+                                    <stop offset="1" stop-color="#0e0a07" stop-opacity="1"/>
+                                </linearGradient>
+                                <linearGradient id="hsFar" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0" stop-color="#33261a"/>
+                                    <stop offset="1" stop-color="#241a12"/>
+                                </linearGradient>
+                            </defs>
+                            <circle cx="880" cy="118" r="196" fill="url(#hsSun)"/><circle cx="880" cy="118" r="86" fill="url(#hsSun)" opacity="0.75"/>
+                            <g fill="url(#hsFar)" opacity="0.85">
+                                <path d="M0 300V238h56v-18h38v18h52v-26h54v26h66v-12h48v12h58v-22h52v22h76v-10h58v10h66v-18h58v18h68v-7h66v7h86v-16h58v16h68z"/>
+                            </g>
+                            <g fill="#1d150e">
+                                <path d="M118 300V212l26-11v-21l24 12v-26l22 11v123z"/>
+                                <path d="M404 300V228l22-17v-14l20 9v-23l18 8v109z"/>
+                                <path d="M742 300V196l24 14v-26l22 18v-17l18 11v104z"/>
+                                <path d="M1012 300V220l20-12v-18l18 10v100z"/>
+                            </g>
+                            <g stroke="#0d0906" fill="none">
+                                <path d="M0 252h216l54 14" stroke-width="10"/>
+                                <path d="M330 266h74" stroke-width="10"/>
+                                <path d="M436 250h186" stroke-width="10"/>
+                                <path d="M676 262l52-16h176" stroke-width="10"/>
+                                <path d="M948 246h252" stroke-width="9" opacity="0.8"/>
+                            </g>
+                            <g fill="#171008" opacity="0.95">
+                                <rect x="150" y="252" width="16" height="48"/>
+                                <rect x="520" y="250" width="16" height="50"/>
+                                <rect x="820" y="226" width="14" height="74"/>
+                            </g>
+                            <g fill="#0c0806">
+                                <path d="M60 300l22-26 30 12 18-16 20 30z"/>
+                                <path d="M300 300l18-18 26 8 14 10z"/>
+                                <path d="M980 300l20-22 28 10 16 12z"/>
+                                <path d="M1120 300l16-18 24 8 14 10z"/>
+                            </g>
+                            <rect y="170" width="1200" height="130" fill="url(#hsHaze)"/>
+                        </svg>
+                    </div>
                     <h1>☢️ 末日准备者综合生存知识库</h1>
                     <p class="welcome-subtitle">BE PREPARED. STAY ALIVE.</p>
                     <div class="welcome-stats">
@@ -154,11 +207,6 @@
     <!-- 回到顶部 -->
     <button class="back-to-top" id="backToTop" title="回到顶部">⬆</button>
 
-    <script src="js/data.js"></script>
-    <script src="js/resources.js"></script>
-    <script src="js/advisor.js"></script>
-    <script src="js/calc.js"></script>
-    <script src="js/shelter-planner.js"></script>
-    <script src="js/app.js"></script>
+    <script type="module" src="/src/main.js"></script>
 </body>
 </html>

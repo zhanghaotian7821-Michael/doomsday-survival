@@ -134,7 +134,8 @@ const SURVIVAL_DATA = {
         { id: 'knots', name: '绳索与结法' },
         { id: 'fire-craft', name: '野外生火' },
         { id: 'bush-food', name: '野外觅食' },
-        { id: 'weather', name: '天气预测' }
+        { id: 'weather', name: '天气预测' },
+        { id: 'tracking', name: '追踪与痕迹' }
       ]
     },
     {
@@ -439,7 +440,7 @@ const SURVIVAL_DATA = {
       tags: ['地上', '堡垒', '加固', '防御'],
       importance: 4,
       difficulty: 4,
-      related: ['base-defense', 'fortification-methods', 'camouflage-techniques'],
+      related: ['base-defense', 'underground-bunker-design', 'camouflage-techniques'],
       content: `
 <h2>地上堡垒建造指南</h2>
 
@@ -802,7 +803,7 @@ const SURVIVAL_DATA = {
       tags: ['植物', '觅食', '蘑菇', '野菜', '识别'],
       importance: 4,
       difficulty: 3,
-      related: ['hunting-trapping', 'wilderness-medicine', 'food-preservation'],
+      related: ['hunting-trapping', 'herbal-medicine', 'food-preservation'],
       content: `
 <h2>可食用野生植物图鉴</h2>
 <p>在极端情况下，了解可食用植物可以避免饥饿。但<em>错误识别可能致命</em>——你必须100%确定后才能食用。</p>
@@ -896,7 +897,7 @@ const SURVIVAL_DATA = {
       tags: ['火', '生火', '打火石', '钻木取火', '火绒'],
       importance: 5,
       difficulty: 3,
-      related: ['bushcraft-fire', 'solar-power', 'emergency-heating'],
+      related: ['bushcraft-shelter', 'solar-power', 'generator-fuel'],
       content: `
 <h2>生火技术大全</h2>
 <p>火——人类文明的基础。在生存场景中，火可以提供<em>温暖、净水、烹饪、照明、心理安慰、信号、防御野生动物</em>。掌握多种生火方法是生存的必修课。</p>
@@ -1074,7 +1075,7 @@ const SURVIVAL_DATA = {
       tags: ['防御', '警戒', '周界', '观察', '火力'],
       importance: 5,
       difficulty: 4,
-      related: ['fortification-methods', 'traps-defense', 'camouflage-techniques'],
+      related: ['above-ground-fortress', 'traps-defense', 'camouflage-techniques'],
       content: `
 <h2>据点防御体系构建</h2>
 <p>在末日后的无政府状态中，你的物资储备会成为掠夺者的目标。<em>分层防御</em>是据点安全的核心原则。</p>
@@ -1942,7 +1943,7 @@ const SURVIVAL_DATA = {
       tags: ['发电机', '燃料', '汽油', '柴油', '丙烷'],
       importance: 4,
       difficulty: 3,
-      related: ['solar-power', 'battery-storage', 'biofuel-production'],
+      related: ['solar-power', 'battery-storage', 'fire-making-complete'],
       content: `
 <h2>发电机选择与燃料储存</h2>
 <p>发电机是太阳能的重要补充——尤其是在连续阴雨天或冬季日照不足时。但发电机有噪音（暴露位置）和燃料消耗两个关键缺点。</p>
@@ -1975,7 +1976,7 @@ const SURVIVAL_DATA = {
       tags: ['追踪', '脚印', '反追踪', '侦察'],
       importance: 3,
       difficulty: 4,
-      related: ['camouflage-techniques', 'base-defense', 'navigation-basics'],
+      related: ['camouflage-techniques', 'base-defense', 'natural-navigation'],
       content: `
 <h2>追踪与反追踪技术</h2>
 <p>追踪能力让你能够<em>狩猎、侦察威胁、寻找失踪队友</em>。反追踪能力则防止你的行踪被敌方追踪到。</p>
@@ -3147,6 +3148,12 @@ const SURVIVAL_DATA = {
     }
   ]
 };
+
+// 以 ES 模块加载时顶层 const 不会自动挂到 window，这里显式桥接，
+// 让尚未模块化的旧脚本（app.js 等）继续按全局名访问
+if (typeof window !== 'undefined') {
+  window.SURVIVAL_DATA = SURVIVAL_DATA;
+}
 
 // Export for module usage
 if (typeof module !== 'undefined' && module.exports) {

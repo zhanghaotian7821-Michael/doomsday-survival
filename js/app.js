@@ -28,6 +28,28 @@
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => document.querySelectorAll(sel);
 
+  // 规格值可能是「按档位分列的对象」，直接插值会渲染成 [object Object]
+  // 有当前档位就取当前档位，否则把各档拼起来展示
+  const specValue = (v, item) => {
+    if (v === null || v === undefined) return '';
+    if (typeof v !== 'object') return v;
+    if (item && item.tierId && v[item.tierId] !== undefined) return v[item.tierId];
+    return Object.values(v).join(' / ');
+  };
+
+  // pros/cons 在部分物资里是按档位分组的对象，部分是数组，个别是字符串。
+  // 统一转成字符串数组，否则 .map / .slice 会直接抛 TypeError 把界面打白
+  const asStrList = (v, item) => {
+    if (v === null || v === undefined) return [];
+    if (Array.isArray(v)) return v.filter(x => x !== null && x !== undefined).map(String);
+    if (typeof v === 'string') return [v];
+    if (typeof v === 'object') {
+      if (item && item.tierId && Array.isArray(v[item.tierId])) return v[item.tierId].map(String);
+      return Object.values(v).flat().filter(x => x !== null && x !== undefined).map(String);
+    }
+    return [String(v)];
+  };
+
   const dom = {
     navTree: $('#navTree'),
     mainContent: $('#mainContent'),
@@ -198,7 +220,7 @@
     const totalArticles = SURVIVAL_DATA.articles.length;
     $('#statArticles').textContent = totalArticles + '+';
     $('#statCategories').textContent = SURVIVAL_DATA.categories.length;
-    $('#statTools').textContent = '4';
+    $('#statTools').textContent = '5';   // 水/食物/辐射/负重/燃料
   }
 
   // --- 文章展示 ---
@@ -711,7 +733,7 @@
               <div class="rc-cat">${cat ? cat.icon + ' ' + cat.name : ''}</div>
               <div class="rc-rating">${stars}</div>
               <div class="rc-specs">
-                ${Object.entries(item.specs).slice(0, 4).map(([k,v]) => `<span class="rc-spec"><strong>${k}:</strong> ${v}</span>`).join('')}
+                ${Object.entries(item.specs).slice(0, 4).map(([k,v]) => `<span class="rc-spec"><strong>${k}:</strong> ${specValue(v, item)}</span>`).join('')}
               </div>
               <div class="rc-price">${item.priceRange || item.priceLevel}</div>
               <div class="rc-actions">
@@ -777,16 +799,16 @@
         <div class="rd-section">
           <h4>📋 规格参数</h4>
           <table class="plan-table">
-            ${Object.entries(item.specs).map(([k,v]) => `<tr><td><strong>${k}</strong></td><td>${v}</td></tr>`).join('')}
+            ${Object.entries(item.specs).map(([k,v]) => `<tr><td><strong>${k}</strong></td><td>${specValue(v, item)}</td></tr>`).join('')}
           </table>
         </div>
         <div class="rd-section">
           <h4>✅ 优点</h4>
-          <ul>${item.pros.map(p => `<li>${p}</li>`).join('')}</ul>
+          <ul>${asStrList(item.pros, item).map(p => `<li>${p}</li>`).join('')}</ul>
         </div>
         <div class="rd-section">
           <h4>⚠️ 缺点</h4>
-          <ul>${item.cons.map(c => `<li>${c}</li>`).join('')}</ul>
+          <ul>${asStrList(item.cons, item).map(c => `<li>${c}</li>`).join('')}</ul>
         </div>
         <div class="rd-section">
           <h4>🔄 替代品</h4>
@@ -858,10 +880,10 @@
           <tr><td><strong>类型</strong></td>${items.map(i => `<td>${i.type||'-'}</td>`).join('')}</tr>
           <tr><td><strong>价格</strong></td>${items.map(i => `<td>${i.priceRange||i.priceLevel}</td>`).join('')}</tr>
           ${allSpecKeys.map(k => `
-            <tr><td><strong>${k}</strong></td>${items.map(i => `<td>${i.specs[k]||'-'}</td>`).join('')}</tr>
+            <tr><td><strong>${k}</strong></td>${items.map(i => `<td>${specValue(i.specs[k], i) || '-'}</td>`).join('')}</tr>
           `).join('')}
-          <tr><td><strong>优点</strong></td>${items.map(i => `<td>${i.pros.slice(0,3).join('<br>')}</td>`).join('')}</tr>
-          <tr><td><strong>缺点</strong></td>${items.map(i => `<td>${i.cons.slice(0,3).join('<br>')}</td>`).join('')}</tr>
+          <tr><td><strong>优点</strong></td>${items.map(i => `<td>${asStrList(i.pros, i).slice(0,3).join('<br>')}</td>`).join('')}</tr>
+          <tr><td><strong>缺点</strong></td>${items.map(i => `<td>${asStrList(i.cons, i).slice(0,3).join('<br>')}</td>`).join('')}</tr>
         </table>
       </div>
     `;
@@ -1071,17 +1093,28 @@
     }).filter(Boolean);
 
     // Search resources
-    const resourceResults = (window.RESOURCE_DB ? RESOURCE_DB.items : []).map(item => {
+    // 同一款物资有 4 个档位（budget/standard/premium/ultimate），按「去掉档位后缀的品名」
+    // 聚合成一条，否则搜「净水」前 4 条全是同一件东西
+    const baseName = (n) => (n || '').replace(/\s*\[[^\]]*\]\s*$/, '').trim();
+    const resHits = new Map();
+    for (const item of (window.RESOURCE_DB ? RESOURCE_DB.items : [])) {
       let score = 0;
-      if (item.name.toLowerCase().includes(query)) score += 80;
+      const nameLower = (item.name || '').toLowerCase();
+      if (nameLower.includes(query)) score += 80;
       if (item.type && item.type.toLowerCase().includes(query)) score += 40;
-      if (item.review && item.review.toLowerCase().includes(query)) score += 20;
-      if (score > 0) {
+      if (typeof item.review === 'string' && item.review.toLowerCase().includes(query)) score += 20;
+      if (score === 0) continue;
+      const key = baseName(item.name);
+      const hit = resHits.get(key);
+      if (!hit) {
         const cat = RESOURCE_DB.categories.find(c => c.id === item.category);
-        return { type: 'resource', item, score, catName: cat ? cat.name : '' };
+        resHits.set(key, { type: 'resource', item, score, catName: cat ? cat.name : '', tiers: 1 });
+      } else {
+        hit.tiers += 1;
+        if (score > hit.score) { hit.item = item; hit.score = score; }
       }
-      return null;
-    }).filter(Boolean);
+    }
+    const resourceResults = [...resHits.values()];
 
     const allResults = [...articleResults, ...resourceResults].sort((a,b) => b.score - a.score).slice(0, 20);
 
@@ -1100,7 +1133,7 @@
         } else {
           return `
             <div class="search-result-item" data-type="resource" data-id="${r.item.id}">
-              <div class="sr-title">📦 ${highlightMatch(r.item.name, query)} <span style="font-size:10px;color:var(--accent);">[物资]</span></div>
+              <div class="sr-title">📦 ${highlightMatch(r.item.name, query)} <span style="font-size:10px;color:var(--accent);">[物资]</span>${r.tiers > 1 ? `<span style="font-size:10px;color:var(--text-muted);"> ${r.tiers} 档可选</span>` : ''}</div>
               <div class="sr-category">${r.catName} | ★${r.item.rating} | ${r.item.priceRange||''}</div>
             </div>`;
         }

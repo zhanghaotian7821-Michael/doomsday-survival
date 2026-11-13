@@ -3,6 +3,9 @@
 // 5步向导 | Canvas平面图编辑器 | 材料清单
 // ============================================
 
+// 画布像素尺寸：660×460 的画布代表 plan.area 平方米，面积换算以此为准
+const CANVAS_W = 660, CANVAS_H = 460;
+
 var SHELTER_PLANNER = {
   currentStep: 1,
   plan: {
@@ -35,6 +38,12 @@ var SHELTER_PLANNER = {
     { id: 'saferoom', name: '安全屋(室内)', icon: '🚪', desc: '在现有建筑内加固一个房间。最快最简单。适合快速避难。', materials: { concrete: 5, steel: 300, soil: false } },
     { id: 'custom', name: '完全自定义', icon: '🔧', desc: '自由设计所有参数。适合有特殊需求的准备者。', materials: { concrete: 0, steel: 0, soil: false } }
   ],
+
+  // 画布像素面积 → 真实平方米（唯一换算口径，禁止在别处手写 (660*460)）
+  m2(pxArea) {
+    const total = (CANVAS_W * CANVAS_H) || 1;
+    return pxArea * (this.plan.area || 0) / total;
+  },
 
   init() {
     this.currentStep = 1;
@@ -209,7 +218,8 @@ var SHELTER_PLANNER = {
 
   // --- Step 4: 建造计划 ---
   renderStep4_Plan() {
-    const totalRoomArea = this.plan.rooms.reduce((s, r) => s + (r.w * r.h), 0);
+    // 房间面积是画布像素²，必须先换算成 m²，否则建材/工期会放大 3036 倍
+    const totalRoomArea = this.plan.rooms.reduce((s, r) => s + this.m2(r.w * r.h), 0);
     const foodDays = this.plan.people * this.plan.duration;
     const waterLiters = foodDays * 3;
     const foodKg = foodDays * 0.6;
@@ -219,18 +229,19 @@ var SHELTER_PLANNER = {
     const concreteNeeded = Math.max(0, (totalRoomArea * 0.3 * shelterType.materials.concrete / 40 * budgetFactor).toFixed(1));
     const steelNeeded = Math.max(0, (totalRoomArea * shelterType.materials.steel / 40 * budgetFactor).toFixed(0));
 
+    // group 是给表格分组用的显式字段，禁止再用中文 label 做匹配键
     const calcItems = [
-      { label: '混凝土 (结构)', value: concreteNeeded + ' m³', note: '含底板+墙体+顶板' },
-      { label: '钢筋', value: steelNeeded + ' kg', note: '结构加固' },
-      { label: '防水材料', value: (totalRoomArea * 1.5).toFixed(0) + ' m²', note: '全面防水处理' },
-      { label: '通风管道', value: (Math.sqrt(totalRoomArea) * 3).toFixed(1) + ' m', note: '进风+排风' },
-      { label: '电缆', value: (Math.sqrt(totalRoomArea) * 5).toFixed(0) + ' m', note: '照明+插座+设备' },
-      { label: 'NBC过滤器', value: Math.ceil(this.plan.people / 2) + ' 套', note: '每2人配1套' },
-      { label: '饮用水储备', value: (waterLiters / 1000).toFixed(1) + ' 吨(' + waterLiters + 'L)', note: '按每人3L/天' },
-      { label: '食物储备', value: (foodKg * budgetFactor).toFixed(0) + ' kg', note: '谷物+豆类+罐头' },
-      { label: '燃料储备', value: (this.plan.duration * this.plan.people * 0.05).toFixed(0) + ' L', note: '烹饪+应急发电' },
-      { label: '太阳能板(建议)', value: Math.ceil(this.plan.people * 0.2) + ' kW', note: '基础电力供应' },
-      { label: '电池容量(建议)', value: (this.plan.people * this.plan.duration * 0.02).toFixed(0) + ' kWh', note: '储能' }
+      { group: 'material', label: '混凝土 (结构)', value: concreteNeeded + ' m³', note: '含底板+墙体+顶板' },
+      { group: 'material', label: '钢筋', value: steelNeeded + ' kg', note: '结构加固' },
+      { group: 'material', label: '防水材料', value: (totalRoomArea * 1.5).toFixed(0) + ' m²', note: '全面防水处理' },
+      { group: 'material', label: '通风管道', value: (Math.sqrt(totalRoomArea) * 3).toFixed(1) + ' m', note: '进风+排风' },
+      { group: 'material', label: '电缆', value: (Math.sqrt(totalRoomArea) * 5).toFixed(0) + ' m', note: '照明+插座+设备' },
+      { group: 'material', label: 'NBC过滤器', value: Math.ceil(this.plan.people / 2) + ' 套', note: '每2人配1套' },
+      { group: 'supply', label: '饮用水储备', value: (waterLiters / 1000).toFixed(1) + ' 吨(' + waterLiters + 'L)', note: '按每人3L/天' },
+      { group: 'supply', label: '食物储备', value: (foodKg * budgetFactor).toFixed(0) + ' kg', note: '谷物+豆类+罐头' },
+      { group: 'supply', label: '燃料储备', value: (this.plan.duration * this.plan.people * 0.05).toFixed(0) + ' L', note: '烹饪+应急发电' },
+      { group: 'supply', label: '太阳能板(建议)', value: Math.ceil(this.plan.people * 0.2) + ' kW', note: '基础电力供应' },
+      { group: 'supply', label: '电池容量(建议)', value: (this.plan.people * this.plan.duration * 0.02).toFixed(0) + ' kWh', note: '储能' }
     ];
 
     return `
@@ -241,7 +252,7 @@ var SHELTER_PLANNER = {
           <div class="plan-summary-card">
             <div class="psc-icon">${shelterType.icon}</div>
             <div class="psc-detail">
-              <strong>${shelterType.name}</strong> | ${this.plan.people}人 | ${this.plan.duration}天 | ${totalRoomArea.toFixed(0)}m²使用面积
+              <strong>${shelterType.name}</strong> | ${this.plan.people}人 | ${this.plan.duration}天 | ${totalRoomArea.toFixed(1)}m²使用面积
             </div>
           </div>
         </div>
@@ -250,7 +261,7 @@ var SHELTER_PLANNER = {
             <h3>🧱 建材清单</h3>
             <table class="plan-table">
               <tr><th>项目</th><th>数量</th><th>说明</th></tr>
-              ${calcItems.filter(i => ['混凝土','钢筋','防水材料','通风管道','电缆','NBC过滤器'].includes(i.label.split('(')[0].trim())).map(i => `
+              ${calcItems.filter(i => i.group === 'material').map(i => `
                 <tr><td>${i.label}</td><td>${i.value}</td><td>${i.note}</td></tr>
               `).join('')}
             </table>
@@ -259,7 +270,7 @@ var SHELTER_PLANNER = {
             <h3>📦 物资储备建议</h3>
             <table class="plan-table">
               <tr><th>项目</th><th>数量</th><th>说明</th></tr>
-              ${calcItems.filter(i => ['饮用水','食物','燃料','太阳能','电池'].includes(i.label.split('(')[0].trim())).map(i => `
+              ${calcItems.filter(i => i.group === 'supply').map(i => `
                 <tr><td>${i.label}</td><td>${i.value}</td><td>${i.note}</td></tr>
               `).join('')}
             </table>
@@ -424,7 +435,7 @@ var SHELTER_PLANNER = {
         ctx.fillText(label, r.x + 4, r.y + 16);
         ctx.fillStyle = '#8b949e';
         ctx.font = '10px sans-serif';
-        ctx.fillText(`${(r.w*r.w*this.plan.area/(660*460)).toFixed(1)}m²`, r.x + 4, r.y + 30);
+        ctx.fillText(`${this.m2(r.w * r.h).toFixed(1)}m²`, r.x + 4, r.y + 30);
 
         // Handles (only for selected)
         if (selectedRoom && selectedRoom.id === r.id) {
@@ -442,7 +453,7 @@ var SHELTER_PLANNER = {
     };
 
     const updateTotalArea = () => {
-      const total = this.plan.rooms.reduce((s, r) => s + (r.w * r.h * this.plan.area / (660 * 460)), 0);
+      const total = this.plan.rooms.reduce((s, r) => s + (this.m2(r.w * r.h)), 0);
       const el = document.getElementById('canvasTotalArea');
       if (el) el.textContent = total.toFixed(1) + ' m²';
     };
@@ -696,7 +707,7 @@ var SHELTER_PLANNER = {
   },
 
   generateTextPlan() {
-    const totalArea = this.plan.rooms.reduce((s, r) => s + (r.w * r.h * this.plan.area / (660 * 460)), 0);
+    const totalArea = this.plan.rooms.reduce((s, r) => s + (this.m2(r.w * r.h)), 0);
     let text = '══════════════════════════════\n';
     text += '  末日避难所建造计划\n';
     text += '══════════════════════════════\n\n';
@@ -706,7 +717,7 @@ var SHELTER_PLANNER = {
     text += '--- 房间列表 ---\n';
     this.plan.rooms.forEach(r => {
       const rt = this.roomTypes.find(t => t.id === r.type);
-      const area = (r.w * r.h * this.plan.area / (660 * 460)).toFixed(1);
+      const area = (this.m2(r.w * r.h)).toFixed(1);
       text += `  ${rt?.icon || '?'} ${rt?.name || r.type}: ${area} m²\n`;
     });
     text += '\n--- 物资储备 ---\n';

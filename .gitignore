@@ -25,3 +25,9 @@ verify_env.py
 experiment*.py
 wechatmsg_full.zip
 *.db
+
+# 构建与依赖（v1.1 起）
+node_modules/
+dist/
+.DS_Store
+*.log

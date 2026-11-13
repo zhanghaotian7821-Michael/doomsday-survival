@@ -1116,3 +1116,8 @@ var RESOURCE_DB = (function() {
   };
 
 })();
+
+// 以 ES 模块加载时 var 不再挂到 window，显式桥接给旧脚本使用
+if (typeof window !== 'undefined') {
+  window.RESOURCE_DB = RESOURCE_DB;
+}
